@@ -300,6 +300,105 @@ struct TrendPoint: Decodable, Identifiable, Hashable {
     var shortDate: String { date.count >= 10 ? String(date.suffix(5)) : date }
 }
 
+// MARK: - 一图流：分人口站位与官方一图流大图
+
+struct BuildHero: Decodable, Hashable {
+    let heroId: String       // 带星级前缀，如 21508
+    let heroBaseId: String   // 基础 id，如 1508
+    let star: Int?
+    let position: String?
+
+    enum CodingKeys: String, CodingKey { case heroId, heroBaseId, heroStarNum, position }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        heroId = c.flexString(.heroId) ?? ""
+        heroBaseId = c.flexString(.heroBaseId) ?? ""
+        star = c.flexInt(.heroStarNum)
+        position = c.flexString(.position)
+    }
+
+    var row: Int? { coords?.0 }
+    var col: Int? { coords?.1 }
+
+    private var coords: (Int, Int)? {
+        guard let p = position else { return nil }
+        let parts = p.split(separator: ",").compactMap { Int($0.trimmingCharacters(in: .whitespaces)) }
+        guard parts.count == 2 else { return nil }
+        return (parts[0], parts[1])
+    }
+}
+
+struct BattleBuild: Decodable, Identifiable, Hashable {
+    let id: String
+    let peopleNum: Int
+    let sampleCount: Int?
+    let winRate: Double?
+    let heroes: [BuildHero]
+
+    enum CodingKeys: String, CodingKey { case id, peopleNum, sampleCount, winRate, heroes }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = c.flexString(.id) ?? UUID().uuidString
+        peopleNum = c.flexInt(.peopleNum) ?? 0
+        sampleCount = c.flexInt(.sampleCount)
+        winRate = c.flexDouble(.winRate)
+        heroes = c.list(BuildHero.self, .heroes)
+    }
+}
+
+struct BattleBuildGroup: Decodable, Identifiable, Hashable {
+    var id: Int { peopleNum }
+    let peopleNum: Int
+    let builds: [BattleBuild]
+
+    enum CodingKeys: String, CodingKey { case peopleNum, builds }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        peopleNum = c.flexInt(.peopleNum) ?? 0
+        builds = c.list(BattleBuild.self, .builds)
+    }
+}
+
+struct SingleImage: Decodable {
+    let url: String?
+    let width: Int?
+    let height: Int?
+    let status: String?
+
+    enum CodingKeys: String, CodingKey { case url, width, height, status }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        url = c.flexString(.url)
+        width = c.flexInt(.width)
+        height = c.flexInt(.height)
+        status = c.flexString(.status)
+    }
+
+    var isReady: Bool { (status ?? "ready") == "ready" && (url?.isEmpty == false) }
+}
+
+/// 棋盘上的一个单位（阵容成型站位和分人口站位共用）
+struct BoardUnit: Identifiable, Hashable {
+    let id: String
+    let heroId: String
+    let name: String
+    let price: Int
+    let star: Int?
+    let row: Int
+    let col: Int
+}
+
+extension CompHero {
+    var boardUnit: BoardUnit? {
+        guard let r = boardRow, let c = boardCol else { return nil }
+        return BoardUnit(id: id, heroId: heroId, name: heroName, price: price, star: star, row: r, col: c)
+    }
+}
+
 struct CompHeroesResponse: Decodable { let heroes: [CompHero]? }
 struct CompEquipsResponse: Decodable { let equips: [EquipStat]? }
 struct CompHexesResponse: Decodable { let hexes: [HexStat]? }

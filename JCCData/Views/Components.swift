@@ -81,6 +81,16 @@ enum Fmt {
 
 // MARK: - 网络图片
 
+extension URL {
+    /// iOS 16 的 URL(string:) 遇到中文会返回 nil（一图流图片的文件名是中文），这里兜底做一次编码
+    static func lenient(_ s: String?) -> URL? {
+        guard let s, !s.isEmpty else { return nil }
+        if let u = URL(string: s) { return u }
+        guard let encoded = s.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) else { return nil }
+        return URL(string: encoded)
+    }
+}
+
 struct RemoteImage: View {
     let url: String?
     @State private var image: UIImage?
@@ -94,7 +104,7 @@ struct RemoteImage: View {
             }
         }
         .task(id: url) {
-            guard let s = url, let u = URL(string: s) else {
+            guard let u = URL.lenient(url) else {
                 image = nil
                 return
             }

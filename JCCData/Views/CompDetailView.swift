@@ -29,7 +29,7 @@ struct CompDetailView: View {
 
                 if shown.heroes.contains(where: { $0.boardRow != nil }) {
                     SectionCard(title: "站位", trailing: "上方为前排") {
-                        BoardView(heroes: shown.heroes)
+                        BoardView(units: shown.heroes.compactMap { $0.boardUnit })
                     }
                 }
 
@@ -364,7 +364,7 @@ struct CompDetailView: View {
 // MARK: - 棋盘
 
 struct BoardView: View {
-    let heroes: [CompHero]
+    let units: [BoardUnit]
     private let rows = 4
     private let cols = 7
 
@@ -398,8 +398,8 @@ struct BoardView: View {
 
     @ViewBuilder
     private func cell(row: Int, col: Int, size: CGFloat) -> some View {
-        if let hero = heroes.first(where: { $0.boardRow == row && $0.boardCol == col }) {
-            BoardHeroCell(hero: hero, size: size)
+        if let unit = units.first(where: { $0.row == row && $0.col == col }) {
+            BoardHeroCell(unit: unit, size: size)
         } else {
             Hexagon()
                 .fill(Color.secondary.opacity(0.12))
@@ -408,19 +408,19 @@ struct BoardView: View {
     }
 }
 
-private struct BoardHeroCell: View {
+struct BoardHeroCell: View {
     @EnvironmentObject var model: AppModel
-    let hero: CompHero
+    let unit: BoardUnit
     let size: CGFloat
 
     var body: some View {
-        let gd = model.gameData.hero(hero.heroId, name: hero.heroName)
+        let gd = model.gameData.hero(unit.heroId, name: unit.name)
         RemoteImage(url: gd?.picture)
             .frame(width: size, height: size)
             .clipShape(Hexagon())
-            .overlay(Hexagon().stroke(Palette.cost(hero.price), lineWidth: 2.5))
+            .overlay(Hexagon().stroke(Palette.cost(unit.price), lineWidth: 2.5))
             .overlay(alignment: .bottom) {
-                if let s = hero.star, s >= 3 {
+                if let s = unit.star, s >= 2 {
                     HStack(spacing: 0) {
                         ForEach(0..<min(s, 4), id: \.self) { _ in Image(systemName: "star.fill") }
                     }

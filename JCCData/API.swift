@@ -118,6 +118,16 @@ final class API {
         return r.hexes ?? []
     }
 
+    /// 各人口阶段最常见的站位（每个阶段前 3 套）
+    func battleBuilds(compId: String, setId: Int, version: String) async throws -> [BattleBuildGroup] {
+        try await get("comp/\(compId)/battle-builds", query: q(setId, version))
+    }
+
+    /// dataj.cc 生成好的一图流长图
+    func singleImage(compId: String, setId: Int, version: String) async throws -> SingleImage {
+        try await get("comp/\(compId)/single-image", query: q(setId, version))
+    }
+
     func trend(compId: String) async throws -> [TrendPoint] {
         let r: CompTrendResponse = try await get("comp/\(compId)/trend")
         return r.trend ?? []

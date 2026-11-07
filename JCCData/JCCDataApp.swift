@@ -21,6 +21,9 @@ struct RootView: View {
             RankListView()
                 .tabItem { Label("阵容排行", systemImage: "list.number") }
 
+            OverviewView()
+                .tabItem { Label("一图流", systemImage: "square.grid.3x3.fill") }
+
             FavoritesView()
                 .tabItem { Label("收藏", systemImage: "star") }
 
