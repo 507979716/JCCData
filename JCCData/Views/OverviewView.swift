@@ -5,6 +5,8 @@ import UIKit
 struct OverviewView: View {
     @EnvironmentObject var model: AppModel
     @State private var selectedId: String?
+    @State private var showDatatft = false
+    @StateObject private var datatft = WebViewStore()
 
     private let tiers = ["S", "A", "B", "C", "D"]
 
@@ -45,6 +47,19 @@ struct OverviewView: View {
             .navigationTitle("一图流")
             .navigationDestination(for: Comp.self) { CompDetailView(comp: $0) }
             .refreshable { await model.loadAll() }
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        showDatatft = true
+                    } label: {
+                        Label("datatft 版", systemImage: "safari")
+                            .labelStyle(.titleAndIcon)
+                    }
+                }
+            }
+            .fullScreenCover(isPresented: $showDatatft) {
+                DatatftView(store: datatft)
+            }
             .overlay {
                 if model.isLoading && model.comps.isEmpty {
                     ProgressView("加载中…")
@@ -71,7 +86,7 @@ struct OverviewView: View {
                     HStack(alignment: .top, spacing: 10) {
                         TierBadge(tier: tier, size: 28)
                             .padding(.top, 12)
-                        FlowLayout(spacing: 8) {
+                        FlowLayout(spacing: 6) {
                             ForEach(list) { c in
                                 CarryTile(comp: c, isSelected: c.compId == selected?.compId)
                                     .onTapGesture {
@@ -104,7 +119,7 @@ private struct CarryTile: View {
         let gd = carry.flatMap { model.gameData.hero($0.heroId, name: $0.heroName) }
         VStack(spacing: 3) {
             RemoteImage(url: gd?.picture)
-                .frame(width: 50, height: 50)
+                .frame(width: 46, height: 46)
                 .clipShape(RoundedRectangle(cornerRadius: 9))
                 .overlay(
                     RoundedRectangle(cornerRadius: 9)
@@ -118,7 +133,7 @@ private struct CarryTile: View {
             Text(comp.name)
                 .font(.system(size: 10))
                 .lineLimit(1)
-                .frame(width: 58)
+                .frame(width: 52)
                 .foregroundColor(isSelected ? .accentColor : .primary)
         }
         .contentShape(Rectangle())
