@@ -1,0 +1,14 @@
+# macOS
+.DS_Store
+
+# Xcode user settings and build output
+xcuserdata/
+*.xcuserstate
+DerivedData/
+build/
+
+# Packaged application output
+Payload/
+*.ipa
+*.dSYM/
+*.dSYM.zip
